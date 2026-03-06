@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: fleet_db
+      MYSQL_USER: fleet_user
+      MYSQL_PASSWORD: fleet_password123
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  fleet-manager:
+    build: .
+    network_mode: host
+    environment:
+      - DB_HOST=localhost
+      - DB_PORT=3306
+      - DB_NAME=fleet_db
+      - DB_USER=fleet_user
+      - DB_PASSWORD=fleet_password123
+      - MQTT_BROKER=localhost
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=v1/state_vector/update
+    volumes:
+      - fleet_logs:/app/logs
+
+volumes:
+  mysql_data:
+  fleet_logs:

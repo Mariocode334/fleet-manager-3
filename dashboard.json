@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "title": "Fleet Manager",
+    "uid": "fleet",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Vehiculos",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "rawSql": "SELECT vehicle_id, name, created_at FROM vehicles",
+            "refId": "A",
+            "datasourceUid": "eff6zlirqploga"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Velocidad - Ultima Hora",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "rawSql": "SELECT received_at as time, linear_speed as speed FROM drone_states WHERE received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at",
+            "refId": "A",
+            "datasourceUid": "eff6zlirqploga"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Bateria - Ultima Hora",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "rawSql": "SELECT received_at as time, battery_percentage * 100 as battery FROM drone_states WHERE received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at",
+            "refId": "A",
+            "datasourceUid": "eff6zlirqploga"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Orientacion - Ultima Hora",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+        "targets": [
+          {
+            "rawSql": "SELECT received_at as time, roll, pitch, yaw FROM drone_states WHERE received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at",
+            "refId": "A",
+            "datasourceUid": "eff6zlirqploga"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Velocidad - Ultima Semana",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "rawSql": "SELECT received_at as time, linear_speed as speed FROM drone_states WHERE received_at > NOW() - INTERVAL 1 WEEK ORDER BY received_at",
+            "refId": "A",
+            "datasourceUid": "eff6zlirqploga"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Bateria - Ultima Semana",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "rawSql": "SELECT received_at as time, battery_percentage * 100 as battery FROM drone_states WHERE received_at > NOW() - INTERVAL 1 WEEK ORDER BY received_at",
+            "refId": "A",
+            "datasourceUid": "eff6zlirqploga"
+          }
+        ]
+      }
+    ],
+    "version": 1
+  },
+  "message": "Dashboard created",
+  "overwrite": true
+}

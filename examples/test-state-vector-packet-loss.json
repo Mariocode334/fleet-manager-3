@@ -1,0 +1,20 @@
+{
+  "vehicleId": 33,
+  "sequenceNumber": 5,
+  "location": {
+    "latitude": 45.45350,
+    "longitude": 25.25650,
+    "altitude": 3.0
+  },
+  "orientation": {
+    "roll": 6.0,
+    "pitch": 3.5,
+    "yaw": 182.0
+  },
+  "battery": {
+    "batteryCapacity": 3.2,
+    "batteryPercentage": 0.70
+  },
+  "linearSpeed": 60,
+  "lastUpdate": 1588776898
+}
