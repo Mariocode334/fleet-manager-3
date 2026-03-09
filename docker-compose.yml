@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -28,19 +26,34 @@ services:
 
   fleet-manager:
     build: .
-    network_mode: host
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
     environment:
-      - DB_HOST=localhost
+      - DB_HOST=mysql
       - DB_PORT=3306
       - DB_NAME=fleet_db
       - DB_USER=fleet_user
       - DB_PASSWORD=fleet_password123
-      - MQTT_BROKER=localhost
+      - MQTT_BROKER=mosquitto
       - MQTT_PORT=1883
       - MQTT_TOPIC=v1/state_vector/update
     volumes:
       - fleet_logs:/app/logs
 
+  grafana:
+    image: grafana/grafana:9.5.0
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+
 volumes:
   mysql_data:
   fleet_logs:
+  grafana_data:

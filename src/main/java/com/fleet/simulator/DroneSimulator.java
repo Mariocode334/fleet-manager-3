@@ -8,8 +8,8 @@ import java.util.Random;
 import java.util.concurrent.*;
 
 public class DroneSimulator {
-    private static final String MQTT_BROKER = "tcp://192.168.1.70:1883";
-    private static final String TOPIC = "v1/state_vector/update";
+    private static final String MQTT_BROKER = System.getenv("MQTT_BROKER") != null ? System.getenv("MQTT_BROKER") : "tcp://localhost:1883";
+    private static final String TOPIC = System.getenv("MQTT_TOPIC") != null ? System.getenv("MQTT_TOPIC") : "v1/state_vector/update";
     private static final int MESSAGE_INTERVAL = 10000; // 10 segundos
     private static final int TOTAL_DURATION = 300000; // 5 minutos
 

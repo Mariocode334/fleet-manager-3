@@ -1,0 +1,105 @@
+{
+  "dashboard": {
+    "title": "Fleet Manager - Drones",
+    "uid": "fleet-manager",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Lista de Vehículos",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT vehicle_id, name, created_at FROM vehicles"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Velocidad - Última Hora",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT received_at as time, linear_speed FROM drone_states WHERE vehicle_id = $vehicle_id AND received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at"
+          }
+        ],
+        "templating": {
+          "list": [
+            {
+              "name": "vehicle_id",
+              "type": "query",
+              "query": "SELECT vehicle_id FROM vehicles",
+              "refresh": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": 3,
+        "title": "Batería - Última Hora",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT received_at as time, battery_percentage * 100 FROM drone_states WHERE vehicle_id = $vehicle_id AND received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Orientación (Roll/Pitch/Yaw) - Última Hora",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 16, "w": 24, "h": 8},
+        "targets": [
+          {
+            "refId": "A",
+            "legendFormat": "Roll",
+            "rawSql": "SELECT received_at as time, roll FROM drone_states WHERE vehicle_id = $vehicle_id AND received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at"
+          },
+          {
+            "refId": "B",
+            "legendFormat": "Pitch",
+            "rawSql": "SELECT received_at as time, pitch FROM drone_states WHERE vehicle_id = $vehicle_id AND received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at"
+          },
+          {
+            "refId": "C",
+            "legendFormat": "Yaw",
+            "rawSql": "SELECT received_at as time, yaw FROM drone_states WHERE vehicle_id = $vehicle_id AND received_at > NOW() - INTERVAL 1 HOUR ORDER BY received_at"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Velocidad - Última Semana",
+        "type": "timeseries",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT received_at as time, AVG(linear_speed) as speed FROM drone_states WHERE vehicle_id = $vehicle_id AND received_at > NOW() - INTERVAL 1 WEEK GROUP BY FLOOR(UNIX_TIMESTAMP(received_at)/3600) ORDER BY received_at"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Batería - Última Semana",
+        "type": "timeseries",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "refId": "A",
+            "rawSql": "SELECT received_at as time, AVG(battery_percentage) * 100 as battery FROM drone_states WHERE vehicle_id = $vehicle_id AND received_at > NOW() - INTERVAL 1 WEEK GROUP BY FLOOR(UNIX_TIMESTAMP(received_at)/3600) ORDER BY received_at"
+          }
+        ]
+      }
+    ],
+    "version": 1
+  },
+  "message": "Fleet Manager Dashboard",
+  "overwrite": true
+}

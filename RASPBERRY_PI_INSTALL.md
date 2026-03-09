@@ -1,61 +1,40 @@
-# Instalación en Raspberry Pi 4 (64-bit)
+# Instalación en Raspberry Pi
 
-Esta guía detalla todos los pasos para instalar y ejecutar el Fleet Manager en una Raspberry Pi 4 con Raspberry Pi OS de 64 bits.
+Guía completa para instalar Fleet Manager en Raspberry Pi.
 
-## Requisitos del Sistema
+## Requisitos
 
-- **Hardware**: Raspberry Pi 4 (4GB RAM mínimo recomendado)
-- **SO**: Raspberry Pi OS (64-bit) - Debian Bookworm
-- **Almacenamiento**: Tarjeta microSD de 32GB+ o SSD USB
+- Raspberry Pi 4 (4GB RAM) o Raspberry Pi 5
+- Tarjeta microSD 32GB+
+- Raspberry Pi OS (64-bit)
 
-## 1. Actualizar el Sistema
+## Instalación
+
+### 1. Actualizar sistema
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo reboot
 ```
 
-## 2. Instalar Java 11 (OpenJDK)
+### 2. Instalar Java 21
 
 ```bash
-sudo apt install -y openjdk-17-jdk
+sudo apt install -y openjdk-21-jdk
 java -version
 ```
 
-**Nota**: Se recomienda Java 17 por mejor rendimiento y soporte en Raspberry Pi OS actual.
-
-## 3. Instalar Docker
+### 3. Instalar Docker
 
 ```bash
-# Instalar dependencias
-sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
-
-# Añadir clave GPG de Docker
-curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
-# Añadir repositorio Docker
-echo "deb [arch=arm64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Instalar Docker
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-
-# Habilitar Docker al inicio
+sudo apt install -y docker.io docker-compose
 sudo systemctl enable docker
 sudo systemctl start docker
-
-# Añadir usuario al grupo docker
 sudo usermod -aG docker $USER
-# Cerrar sesión y volver a entrar para aplicar cambios
 ```
 
-## 4. Instalar Git (si no está instalado)
+**Nota**: Cerrar sesión y volver a entrar para aplicar cambios del grupo.
 
-```bash
-sudo apt install -y git
-```
-
-## 5. Clonar el Proyecto
+### 4. Clonar proyecto
 
 ```bash
 cd ~
@@ -63,209 +42,151 @@ git clone https://github.com/tu-usuario/fleet-manager.git
 cd fleet-manager
 ```
 
-## 6. Construir la Aplicación (Opcional - Local)
-
-Si prefieres compilar localmente en lugar de usar Docker:
+### 5. Configurar SSH (opcional para acceso remoto)
 
 ```bash
-# Instalar Maven
-sudo apt install -y maven
-
-# Compilar
-mvn clean package -DskipTests
-
-# El JAR estará en target/fleet-manager-1.0.0.jar
+sudo raspi-config
+# Interface Options → SSH → Yes
 ```
 
-## 7. Configurar y Ejecutar con Docker Compose
+### 6. Ejecutar
 
 ```bash
-# Crear y levantar los contenedores
+cd fleet-manager
 sudo docker-compose up -d --build
+```
 
+### 7. Verificar
+
+```bash
+sudo docker-compose ps
+```
+
+Debería mostrar:
+- fleet-manager   | Up
+- mosquitto      | Up  
+- mysql          | Up (healthy)
+- grafana        | Up
+
+## Servicios Disponibles
+
+| Servicio | Puerto | URL |
+|----------|--------|-----|
+| MQTT | 1883 | tcp://192.168.x.x:1883 |
+| MySQL | 3306 | 192.168.x.x:3306 |
+| Fleet Manager | 8080 | http://192.168.x.x:8080 |
+| Grafana | 3000 | http://192.168.x.x:3000 |
+
+## Acceso a Grafana
+
+1. Abrir navegador: **http://192.168.x.x:3000**
+2. Usuario: **admin**
+3. Contraseña: **admin123**
+
+### Configurar Data Source
+
+1. **Configuration** → **Data Sources**
+2. **+ Add data source**
+3. Seleccionar **MySQL**
+4. Configurar:
+   - Host: `mysql:3306`
+   - Database: `fleet_db`
+   - User: `fleet_user`
+   - Password: `fleet_password123`
+5. **Save & Test**
+
+## Probar el Sistema
+
+### Enviar mensaje de prueba
+
+```bash
+sudo docker exec fleet-manager-mosquitto-1 mosquitto_pub -t v1/state_vector/update -m '{
+  "vehicleId": 33,
+  "sequenceNumber": 1,
+  "location": {"latitude": 45.45123, "longitude": 25.25456, "altitude": 2.1},
+  "orientation": {"roll": 5.2, "pitch": 3.1, "yaw": 180.0},
+  "battery": {"batteryCapacity": 3.2, "batteryPercentage": 0.75},
+  "linearSpeed": 55,
+  "lastUpdate": '$(date +%s)'
+}'
+```
+
+### Ver datos
+
+```bash
+sudo docker exec fleet-manager-mysql-1 mysql -ufleet_user -pfleet_password123 fleet_db -e "SELECT * FROM vehicles;"
+```
+
+## Simulador de Drones
+
+### Compilar
+
+```bash
+mvn clean package -Psimulator -DskipTests
+```
+
+### Ejecutar (en la Raspberry Pi)
+
+```bash
+# Dron 33
+java -jar target/drone-simulator.jar 33 1
+
+# Dron 44 (en otra terminal)
+java -jar target/drone-simulator.jar 44 1
+```
+
+## Conectar Drones Reales
+
+Los drones deben configurarse para enviar mensajes MQTT a:
+
+- **Broker**: `192.168.x.x` (IP de la Raspberry Pi)
+- **Puerto**: `1883`
+- **Topic**: `v1/state_vector/update`
+
+## Comandos Útiles
+
+```bash
 # Ver logs
-sudo docker-compose logs -f fleet-manager
+sudo docker-compose logs -f
+
+# Detener
+sudo docker-compose down
+
+# Reiniciar
+sudo docker-compose restart
 
 # Ver estado
 sudo docker-compose ps
 ```
 
-## 8. Verificar la Instalación
-
-### Verificar MySQL
-```bash
-sudo docker exec -it fleet-manager-mysql-1 mysql -ufleet_user -pfleet_password123 fleet_db -e "SHOW TABLES;"
-```
-
-### Verificar MQTT
-```bash
-# Suscribirse al topic
-sudo docker exec -it fleet-manager-mosquitto-1 mosquitto_sub -t v1/state_vector/update -v
-```
-
-### Verificar Fleet Manager
-```bash
-sudo docker logs fleet-manager-fleet-manager-1
-```
-
-## 9. Probar el Sistema
-
-### Publicar un mensaje de prueba
-```bash
-sudo docker exec -it fleet-manager-mosquitto-1 mosquitto_pub -t v1/state_vector/update -m '{
-  "vehicleId": 33,
-  "sequenceNumber": 1,
-  "location": {
-    "latitude": 45.45123,
-    "longitude": 25.25456,
-    "altitude": 2.10789
-  },
-  "orientation": {
-    "roll": 5.2,
-    "pitch": 3.1,
-    "yaw": 180.5
-  },
-  "battery": {
-    "batteryCapacity": 3.2,
-    "batteryPercentage": 0.75
-  },
-  "linearSpeed": 55,
-  "lastUpdate": 1588776718
-}'
-```
-
-### Consultar datos en MySQL
-```bash
-sudo docker exec -it fleet-manager-mysql-1 mysql -ufleet_user -pfleet_password123 fleet_db -e "SELECT * FROM drone_states;"
-```
-
-## 10. Comandos Útiles
-
-```bash
-# Detener servicios
-sudo docker-compose down
-
-# Reiniciar servicios
-sudo docker-compose restart
-
-# Ver logs en tiempo real
-sudo docker-compose logs -f
-
-# Rebuild después de cambios
-sudo docker-compose up -d --build
-
-# Ver uso de recursos
-docker stats
-```
-
-## 11. Configuración de Red (Opcional)
-
-Si necesitas acceder desde otros dispositivos:
-
-### Abrir puertos en el firewall
-```bash
-sudo ufw allow 1883/tcp  # MQTT
-sudo ufw allow 3306/tcp  # MySQL (solo si es necesario)
-sudo ufw enable
-```
-
-### Configurar IP estática (opcional)
-Editar `/etc/dhcpcd.conf`:
-```
-interface eth0
-static ip_address=192.168.1.100/24
-static routers=192.168.1.1
-static domain_name_servers=192.168.1.1
-```
-
-## 12. Optimizaciones para Raspberry Pi
-
-### Aumentar memoria swap (si es necesario)
-```bash
-sudo dphys-swapfile swapoff
-sudo nano /etc/dphys-swapfile  # Cambiar CONF_SWAPSIZE=1024
-sudo dphys-swapfile setup
-sudo dphys-swapfile swapon
-```
-
-### Configurar Docker para mejor rendimiento
-Crear `/etc/docker/daemon.json`:
-```json
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  },
-  "storage-driver": "overlay2"
-}
-```
-```bash
-sudo systemctl restart docker
-```
-
-## 13. Solución de Problemas
+## Solución de Problemas
 
 ### Docker no inicia
+
 ```bash
 sudo systemctl status docker
 sudo journalctl -xe
 ```
 
-### MySQL no conecta
-```bash
-sudo docker logs fleet-manager-mysql-1
-```
+### Ver logs de un servicio
 
-### MQTT no conecta
 ```bash
+sudo docker logs fleet-manager-fleet-manager-1
+sudo docker logs fleet-manager-mysql-1
 sudo docker logs fleet-manager-mosquitto-1
 ```
 
-### Verificar conectividad entre contenedores
+### Regenerar contenedores
+
 ```bash
-sudo docker exec fleet-manager-fleet-manager-1 ping -c 3 mysql
-sudo docker exec fleet-manager-fleet-manager-1 ping -c 3 mosquitto
+sudo docker-compose down
+sudo docker-compose up -d --build
 ```
 
-## Estructura de Archivos Final
+## Portabilidad
 
-```
-fleet-manager/
-├── src/main/java/com/fleet/
-│   ├── FleetManagerApp.java
-│   ├── config/
-│   ├── mqtt/
-│   ├── database/
-│   ├── model/
-│   ├── validation/
-│   └── util/
-├── pom.xml
-├── Dockerfile
-├── docker-compose.yml
-├── init.sql
-├── mosquitto.conf
-├── README.md
-└── examples/
-```
+El sistema funciona automáticamente en cualquier red:
 
-## Notas Adicionales
-
-1. **Topic MQTT**: `v1/state_vector/update` (configurable via variable de entorno)
-2. **Formato de mensaje**: El sistema acepta el formato StateVector definido en JSON Schema
-3. **Base de datos**: MySQL 8.0 con tablas optimizadas para índices
-4. **Logging**: Los logs se guardan en `/app/logs/fleet-manager.log` dentro del contenedor
-
-## Acceso desde el Dron
-
-El dron debe configurarse para enviar mensajes MQTT a:
-- **Host**: IP de la Raspberry Pi
-- **Puerto**: 1883
-- **Topic**: `v1/state_vector/update`
-
-Ejemplo de configuración en el dron:
-```
-MQTT_BROKER=192.168.1.100
-MQTT_PORT=1883
-MQTT_TOPIC=v1/state_vector/update
-```
+- No requiere cambios de IP
+- Usa nombres de servicio Docker internos
+- Los drones se conectan usando la IP de la Raspberry Pi
