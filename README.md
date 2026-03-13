@@ -6,10 +6,13 @@ Sistema de gestión de drones que reciben datos vía MQTT y los almacenan en MyS
 
 - Recepción de mensajes MQTT con vector de estado de drones
 - Almacenamiento en MySQL
+- **Validación de vehículos**: Se rechazan mensajes de vehicle_id no registrados en la base de datos
+- **Actualización automática del dashboard**: Cuando un dron envía su primer mensaje, el dashboard de Grafana se actualiza automáticamente
 - Detección de paquetes perdidos
 - Carga de secuencias desde base de datos al iniciar
-- Dashboard Grafana para visualización
+- Dashboard Grafana para visualización con botones dinámicos
 - Simulador de drones para pruebas
+- Envío de timestamp legible (formato ISO 8601)
 
 ## Requisitos
 
@@ -39,6 +42,8 @@ sudo docker-compose up -d --build
 | MySQL | 3306 | localhost:3306 |
 | Fleet Manager | 8080 | http://localhost:8080 |
 | Grafana | 3000 | http://localhost:3000 |
+| Node Exporter | 9100 | http://localhost:9100 |
+| Prometheus | 9090 | http://localhost:9090 |
 
 ## Configuración
 
@@ -79,6 +84,36 @@ sudo docker exec fleet-manager-mysql-1 mysql -ufleet_user -pfleet_password123 fl
 
 # Ver vehículos
 sudo docker exec fleet-manager-mysql-1 mysql -ufleet_user -pfleet_password123 fleet_db -e "SELECT * FROM vehicles;"
+
+# Ver logs de errores
+sudo docker exec fleet-manager-mysql-1 mysql -ufleet_user -pfleet_password123 fleet_db -e "SELECT * FROM fleet_logs WHERE log_level='ERROR';"
+```
+
+## Validación de Vehículos
+
+El sistema valida que el `vehicle_id` del mensaje exista en la base de datos:
+
+- **Mensajes rechazados**: Si un mensaje llega con un `vehicle_id` que no está registrado en la tabla `vehicles`, se rechazará y se registrará en los logs
+- **Primer mensaje**: Cuando un dron registrado envía su primer mensaje, el dashboard de Grafana se actualiza automáticamente para mostrar su botón
+
+### Agregar un nuevo dron
+
+Para agregar un nuevo dron al sistema:
+
+```bash
+# 1. Registrar el dron en la base de datos
+docker exec fleet-manager-mysql-1 mysql -ufleet_user -pfleet_password123 fleet_db -e "INSERT INTO vehicles (vehicle_id, name) VALUES (67, 'DRON_67') ON DUPLICATE KEY UPDATE name='DRON_67';"
+
+# 2. Enviar el primer mensaje del dron (esto actualiza el dashboard automáticamente)
+docker exec fleet-manager-mosquitto-1 mosquitto_pub -t "v1/state_vector/update" -m '{
+  "vehicleId": 67,
+  "sequenceNumber": 1,
+  "lastUpdate": '$(date +%s)',
+  "location": {"latitude": 40.0, "longitude": -3.0, "altitude": 50.0},
+  "orientation": {"roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+  "battery": {"batteryCapacity": 3.2, "batteryPercentage": 0.8},
+  "linearSpeed": 50
+}'
 ```
 
 ## Simulador de Drones
@@ -135,6 +170,21 @@ java -jar drone-simulator.jar 55 1
    - Password: `fleet_password123`
 5. **Save & Test**
 
+### Prometheus (métricas del sistema)
+
+1. **Configuration** → **Data Sources**
+2. **+ Add data source** → **Prometheus**
+3. Configurar:
+   - URL: `http://localhost:9090`
+4. **Save & Test**
+
+### Dashboards
+
+Importar los JSON de `grafana-provisioning/dashboards/`:
+- fleet-overview.json - Vista general de drones
+- vehicle-detail.json - Detalle de cada dron
+- system-performance.json - Métricas del sistema (CPU, RAM, Disco, Red)
+
 ### Queries de ejemplo
 
 ```sql
@@ -163,6 +213,8 @@ WHERE received_at > NOW() - INTERVAL 1 HOUR
 {
   "vehicleId": 33,
   "sequenceNumber": 1,
+  "lastUpdate": 1234567890,
+  "timestamp": "2026-03-13T10:30:00",
   "location": {
     "latitude": 45.45123,
     "longitude": 25.25456,
@@ -177,10 +229,19 @@ WHERE received_at > NOW() - INTERVAL 1 HOUR
     "batteryCapacity": 3.2,
     "batteryPercentage": 0.75
   },
-  "linearSpeed": 55,
-  "lastUpdate": 1234567890
+  "linearSpeed": 55
 }
 ```
+
+**Campos:**
+- `vehicleId` (obligatorio): Identificador del dron - DEBE estar registrado en la base de datos
+- `sequenceNumber` (obligatorio): Número de secuencia del mensaje
+- `lastUpdate` (obligatorio): Timestamp Unix (segundos)
+- `timestamp` (opcional): Fecha/hora en formato ISO 8601
+- `location`: Latitud, longitud y altitud
+- `orientation`: Roll, Pitch, Yaw
+- `battery`: Capacidad y porcentaje de batería
+- `linearSpeed`: Velocidad lineal
 
 ## Comandos Docker
 

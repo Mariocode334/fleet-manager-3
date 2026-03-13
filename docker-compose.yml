@@ -16,6 +16,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - fleet-network
 
   mosquitto:
     image: eclipse-mosquitto:2
@@ -23,6 +25,8 @@ services:
       - "1883:1883"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+    networks:
+      - fleet-network
 
   fleet-manager:
     build: .
@@ -42,6 +46,8 @@ services:
       - MQTT_TOPIC=v1/state_vector/update
     volumes:
       - fleet_logs:/app/logs
+    networks:
+      - fleet-network
 
   grafana:
     image: grafana/grafana:9.5.0
@@ -50,8 +56,17 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - fleet-network
+
+networks:
+  fleet-network:
+    driver: bridge
 
 volumes:
   mysql_data:

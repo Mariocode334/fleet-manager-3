@@ -8,6 +8,7 @@ public class DroneState {
     private Battery battery;
     private int linearSpeed;
     private long lastUpdate;
+    private String timestamp;  // Fecha/hora legible en formato ISO 8601
     private String receivedAt;
 
     public DroneState() {}
@@ -32,6 +33,9 @@ public class DroneState {
 
     public long getLastUpdate() { return lastUpdate; }
     public void setLastUpdate(long lastUpdate) { this.lastUpdate = lastUpdate; }
+
+    public String getTimestamp() { return timestamp; }
+    public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
 
     public String getReceivedAt() { return receivedAt; }
     public void setReceivedAt(String receivedAt) { this.receivedAt = receivedAt; }

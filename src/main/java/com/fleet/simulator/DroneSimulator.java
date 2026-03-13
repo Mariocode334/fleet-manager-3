@@ -4,11 +4,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Random;
 import java.util.concurrent.*;
 
 public class DroneSimulator {
-    private static final String MQTT_BROKER = System.getenv("MQTT_BROKER") != null ? System.getenv("MQTT_BROKER") : "tcp://localhost:1883";
+    private static final String MQTT_BROKER = System.getenv("MQTT_BROKER") != null ? System.getenv("MQTT_BROKER") : "tcp://192.168.1.70:1883";
     private static final String TOPIC = System.getenv("MQTT_TOPIC") != null ? System.getenv("MQTT_TOPIC") : "v1/state_vector/update";
     private static final int MESSAGE_INTERVAL = 10000; // 10 segundos
     private static final int TOTAL_DURATION = 300000; // 5 minutos
@@ -93,9 +95,18 @@ public class DroneSimulator {
     private String generateMessage() {
         JsonObject json = new JsonObject();
 
+        // Usar fecha/hora actual del sistema en formato ISO 8601
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        String currentDateTime = now.format(formatter);
+        
+        // También guardar el timestamp Unix para compatibilidad
+        long currentTimestamp = System.currentTimeMillis() / 1000;
+
         json.addProperty("vehicleId", vehicleId);
         json.addProperty("sequenceNumber", currentSequence);
-        json.addProperty("lastUpdate", System.currentTimeMillis() / 1000);
+        json.addProperty("lastUpdate", currentTimestamp);
+        json.addProperty("timestamp", currentDateTime);  // Nuevo campo con fecha legible
 
         // Location
         JsonObject location = new JsonObject();

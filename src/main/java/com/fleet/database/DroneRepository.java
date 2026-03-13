@@ -25,6 +25,39 @@ public class DroneRepository {
         return instance;
     }
 
+    public boolean vehicleExists(int vehicleId) {
+        String sql = "SELECT COUNT(*) FROM vehicles WHERE vehicle_id = ?";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, vehicleId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            logger.error(String.valueOf(vehicleId), "Error checking vehicle existence: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Verifica si un vehículo ya tiene mensajes en la base de datos
+     */
+    public boolean vehicleHasMessages(int vehicleId) {
+        String sql = "SELECT COUNT(*) FROM drone_states WHERE vehicle_id = ?";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, vehicleId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            logger.error(String.valueOf(vehicleId), "Error checking vehicle messages: " + e.getMessage());
+        }
+        return false;
+    }
+
     public boolean saveDroneState(DroneState state) {
         String sql = "INSERT IGNORE INTO drone_states " +
                 "(last_update, vehicle_id, sequence_number, latitude, longitude, altitude, " +
@@ -34,7 +67,7 @@ public class DroneRepository {
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            ensureVehicleExists(conn, state.getVehicleId());
+            // No longer auto-registering vehicles - must exist in DB first
 
             stmt.setTimestamp(1, Timestamp.from(Instant.ofEpochSecond(state.getLastUpdate())));
             stmt.setInt(2, state.getVehicleId());

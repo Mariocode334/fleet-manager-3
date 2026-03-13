@@ -1,0 +1,173 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]},
+          "unit": "percent"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"expr": "100 * (1 - avg(irate(node_cpu_seconds_total{mode='idle'}[5m])))", "refId": "A"}],
+      "title": "CPU Usage",
+      "type": "gauge"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisCenteredZero": false, "axisLabel": "%", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "opacity", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}},
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "percent"
+        }
+      },
+      "gridPos": {"h": 6, "w": 18, "x": 6, "y": 0},
+      "id": 2,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"expr": "100 * (1 - avg(irate(node_cpu_seconds_total{mode='idle'}[5m])))", "legendFormat": "CPU", "refId": "A"}],
+      "title": "CPU History",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]},
+          "unit": "percent"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 6},
+      "id": 3,
+      "options": {"orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "showThresholdLabels": false, "showThresholdMarkers": true},
+      "targets": [{"expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "refId": "A"}],
+      "title": "Memory Usage",
+      "type": "gauge"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisCenteredZero": false, "axisLabel": "%", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "opacity", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}},
+          "mappings": [],
+          "max": 100,
+          "min": 0,
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "percent"
+        }
+      },
+      "gridPos": {"h": 6, "w": 18, "x": 6, "y": 6},
+      "id": 4,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100", "legendFormat": "Memory", "refId": "A"}],
+      "title": "Memory History",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "Bps"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 12},
+      "id": 5,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "rate(node_disk_read_bytes_total[5m]) + rate(node_disk_written_bytes_total[5m])", "legendFormat": "Disk I/O", "refId": "A"}],
+      "title": "Disk I/O",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisCenteredZero": false, "axisLabel": "B/s", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "opacity", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "Bps"
+        },
+        "overrides": [{"matcher": {"id": "byName", "options": "Write"}, "properties": [{"id": "color", "value": {"fixedColor": "orange", "mode": "fixed"}}]}]
+      },
+      "gridPos": {"h": 6, "w": 18, "x": 6, "y": 12},
+      "id": 6,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"expr": "rate(node_disk_read_bytes_total[5m])", "legendFormat": "Read", "refId": "A"}, {"expr": "rate(node_disk_written_bytes_total[5m])", "legendFormat": "Write", "refId": "B"}],
+      "title": "Disk Read/Write",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "bps"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 18},
+      "id": 7,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "rate(node_network_receive_bytes_total{device=~'eth0|wlan0'}[5m])*8 + rate(node_network_transmit_bytes_total{device=~'eth0|wlan0'}[5m])*8", "legendFormat": "Network", "refId": "A"}],
+      "title": "Network",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "f9ffa9b3-a088-469b-b5d9-ffcc0a68fe93"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisCenteredZero": false, "axisLabel": "Mbps", "axisPlacement": "auto", "drawStyle": "line", "fillOpacity": 20, "gradientMode": "opacity", "hideFrom": {"legend": false, "tooltip": false, "viz": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
+          "unit": "bps"
+        },
+        "overrides": [{"matcher": {"id": "byName", "options": "Upload"}, "properties": [{"id": "color", "value": {"fixedColor": "green", "mode": "fixed"}}]}]
+      },
+      "gridPos": {"h": 6, "w": 18, "x": 6, "y": 18},
+      "id": 8,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"expr": "rate(node_network_receive_bytes_total{device=~'eth0|wlan0'}[5m])*8", "legendFormat": "Download", "refId": "A"}, {"expr": "rate(node_network_transmit_bytes_total{device=~'eth0|wlan0'}[5m])*8", "legendFormat": "Upload", "refId": "B"}],
+      "title": "Network Traffic",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["raspberrypi"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {"refresh_intervals": ["5s", "10s", "30s", "1m"]},
+  "timezone": "browser",
+  "title": "System Performance",
+  "uid": "system-performance",
+  "version": 1,
+  "weekStart": ""
+}
